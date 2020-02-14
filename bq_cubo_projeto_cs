@@ -1,0 +1,12 @@
+select p.name as codigo_projeto,   
+  	   p.nome_do_parceiro__c as nome_parceiro,  
+       o.name as nome_cliente,   
+       u.name as nome_implantador,   
+       p.fase__c as fase_projeto,   
+       cast(p.data_prevista_setup__c as date) as data_prevista_setup,   
+       cast(p.data_realizada_setup__c as date) as data_realizada_setup,    
+       cast(p.data_do_kick_off__c as date) as data_kick_off   
+   from operacoes.salesforce_projeto_customer_sucess_c_full p   
+   left join operacoes.salesforce_opportunity_full o on o.id = p.nome_da_oportunidade__c    
+   left join operacoes.salesforce_user_full u on u.id = p.implantador_do_projeto__c  
+   left join operacoes.salesforce_account_full a on a.id = o.accountid 
