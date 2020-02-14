@@ -1,0 +1,10 @@
+select parse_date('%d/%m/%Y',m_s) as data_referencia, 
+ 			  n__da_nf_e as nr_nfe, 
+ 			  canal as nome_parceiro, 
+        replace(replace(valor_comiss_o,'.',''),',','.') as valor_comissao, 
+ 			  comiss_o_paga___s_n_ as comissao_paga,			  
+ 			  case when data_pagamento = 'Mercos Experience' then PARSE_DATETIME('%d/%m/%Y %H:%M:%S',"18/09/2018 00:00:00")
+              when length(data_pagamento) = 10
+              then PARSE_DATETIME('%d/%m/%Y %H:%M:%S', concat(data_pagamento," 00:00:00")) 
+              else PARSE_DATETIME('%d/%m/%Y %H:%M:%S',data_pagamento) end as data_pagamento 
+        from operacoes.comissao_canais cc 
