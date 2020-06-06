@@ -1,0 +1,123 @@
+select u.id as id_autor,
+	   u.name as nome,
+       u.created_at::date as cadastro_autor,
+       date_part('month', u.birthday::date) as mes_aniversario,
+       u.state as status,
+       u.gender as sexo,
+       u.address_state as estado,
+       u.email as email,
+       case when u.newsletter then 'sim' else 'nao' end as recebe_news, 
+      
+       ((DATE_PART('year', now()::date) - DATE_PART('year', u.created_at::date)) * 12 + 
+       (DATE_PART('month',now()::date) - DATE_PART('month',u.created_at::date)))  as meses_como_autor, 
+       
+       round(((((DATE_PART('year', now()::date) - DATE_PART('year', u.created_at::date)) * 12 + 
+       (DATE_PART('month',now()::date) - DATE_PART('month',u.created_at::date)))) / 12)::numeric,2)  as anos_como_autor, 
+       
+       (select count(b.id)
+		from books b
+	   where b.owner_id = u.id
+	     and b.state <> 'canceled') as qtd_livros_publicados,
+	   
+	   round((select count(b.id)
+			  from books b
+	    	  where b.owner_id = u.id and b.state <> 'canceled') / 
+	   		  ((DATE_PART('year', now()::date) - DATE_PART('year', u.created_at::date)) * 12 +
+       		  (DATE_PART('month',now()::date) - DATE_PART('month',u.created_at::date)))::numeric,2) as media_public_mes,
+       		  
+       round((select count(b.id)
+			  from books b
+	    	  where b.owner_id = u.id and b.state <> 'canceled') / 
+	   		  ((DATE_PART('year', now()::date) - DATE_PART('year', u.created_at::date)) * 12 +
+       		  (DATE_PART('month',now()::date) - DATE_PART('month',u.created_at::date)))::numeric,2) * 12 media_public_ano,		  
+       		  
+      (date_part('year', now()::date)) - (date_part('year', u.birthday ::date)) as idade_autor, 
+       		  
+       		  
+       (select b.created_at 
+          from books b 
+         where b.owner_id = u.id and b.state <> 'canceled' order by b.created_at desc limit 1)::date as data_ultimo_livro,
+         
+         (select b.created_at 
+          from books b 
+         where b.owner_id = u.id and b.state <> 'canceled' order by b.created_at asc limit 1)::date as data_primeiro_livro,
+         
+       (date_part('year', now()::date) - (date_part('year',(select b.created_at 
+         													 from books b 
+         												    where b.owner_id = u.id 
+         												      and b.state <> 'canceled' 
+         											     order by b.created_at desc limit 1)::date))) * 12 + 
+         
+       (date_part('month', now()::date) - (date_part('month',(select b.created_at 
+         													    from books b 
+         												       where b.owner_id = u.id 
+         												         and b.state <> 'canceled'
+         												    order by b.created_at desc limit 1)::date))) as meses_sem_public,
+         												       
+       (date_part('year',(select b.created_at 
+        					from books b 
+        			       where b.owner_id = u.id 
+        			         and b.state <> 'canceled'
+        			    order by b.created_at asc limit 1)::date) - (date_part('year', u.created_at::date))) * 12 + 
+         
+       (date_part('month',(select b.created_at 
+         					 from books b 
+         					where b.owner_id = u.id
+         			   		  and b.state <> 'canceled'
+         		     	 order by b.created_at asc limit 1)::date) - (date_part('month', u.created_at::date))) as meses_ate_public,
+       
+         												       
+         												       
+       (select sum(b.pages_quantity) 
+       from books b
+       where b.owner_id = u.id) / (select count(b.id)
+								     from books b
+	   								where b.owner_id = u.id) as media_paginas,
+	   								
+	  (select count(oi.id)
+	  	 from order_items oi
+	  	 full join books b on u.id = b.owner_id	    
+         full join orders o on o.id = oi.order_id  
+             where oi.product_id = b.id 
+	    	   and (o.state = 'payed' or o.state = 'sent')) as qtd_vendas,
+	  
+	  
+	  (date_part('year',(select oi.created_at 
+        			       from order_items oi
+        			       full join books b on u.id = b.owner_id	    
+                           full join orders o on o.id = oi.order_id  
+             			  where oi.product_id = b.id 
+	    	   				and (o.state = 'payed' or o.state = 'sent') 
+        			   order by oi.created_at asc limit 1)::date) - (date_part('year', (select b.created_at
+        			   																      from books b
+        			   																     where b.owner_id = u.id
+        			   																  order by b.created_at asc limit 1)::date))) * 12 + 
+         
+       (date_part('month',(select oi.created_at 
+        			       from order_items oi
+        			       full join books b on u.id = b.owner_id	    
+                           full join orders o on o.id = oi.order_id  
+             			  where oi.product_id = b.id 
+	    	   				and (o.state = 'payed' or o.state = 'sent')  
+        			     order by oi.created_at asc limit 1)::date) - (date_part('month', (select b.created_at
+        			   																      from books b
+        			   																      where b.owner_id = u.id
+        			   																   order by b.created_at asc limit 1)::date))) as meses_ate_primeira_venda
+	   								
+	  								
+from users u
+full join books b on u.id = b.owner_id	    
+where u.be_author is true
+  and u.created_at::date > '2018-01-01'
+group by 1
+order by 20 desc  
+
+
+
+
+
+
+
+
+
+
